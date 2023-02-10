@@ -1,0 +1,33 @@
+DONE -->
+--------------------------------------
+#add background ->  Done
+#add unbreakablewall Done
+#add collison shape to unbreakablewall wall -> Done
+#add breakawablewall ->  Done
+#add breakawablewall individiual wall destruction animation -> Done
+#add collison breakawablewall -> Done
+#add player sprite -> Done
+#add collison player sprite -> Done
+#add bomb -> Done
+#add plant bomb logic -> Done
+#add wall destruction -> Done
+#add player movement -> Done
+#add bomb explosion logic -> Done
+
+TODO -->
+---------------------------------------
+#add player death logic and animation -> Not Started
+#add gameover logic
+#add menu
+#add score time life pause restart systems.
+#add enemies
+#add enenmies attack logic 
+#add enemies animation and spwan
+#add enemies kill logic
+#add upgrades
+#add some levels
+#add audio
+
+PROGRESS --> 
+---------------------------------------
+#add bomb explosion animation -> partially Done
