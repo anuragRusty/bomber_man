@@ -2,12 +2,13 @@ use raylib::prelude::*;
 use crate::grid::*;
 use crate::bomb::*;
 
-const SPEED:f32 = 0.025;
-
-//const MAX_DEATH_FRAME:i32 = 6;
+const SPEED:f32 = 0.03;
+const MAX_DEATH_FRAME:i32 = 6;
 const PLAYER_COLOR:Color = Color::WHITE;
 const MARGIN:f32 = 2_f32;
+const BOMB_RELOAD_TIME:f32 = 3_f32;
 const BOMB_MARGIN:f32 = 8_f32;
+const EXPLOSION_CROP:f32 = 90_f32;
 pub enum DIR {
     UP,
     DOWN,
@@ -25,6 +26,12 @@ impl DIR{
       }
     } 
 }
+#[derive(PartialEq,Clone)]
+pub enum PlayerState {
+   ALIVE,
+   DYING,
+   DEAD,
+}
 
 pub struct Player{
     pub dir:DIR,
@@ -35,10 +42,8 @@ pub struct Player{
     pub rec_right:Rectangle,
     pub rec_left:Rectangle,
     pub rec_death:Rectangle,
-    pub death:bool,
-    pub planting:bool,
+    pub state:PlayerState,
     pub frames:i32,
-    pub duration:f32,
     pub time:f32,
     pub bomb_reload_time:f32,
 }
@@ -53,14 +58,11 @@ impl Player{
      let rec_right = Rectangle::new(0_f32, 48_f32, (TILE_SIZE*SCALE) as f32, (TILE_SIZE*SCALE-1) as f32);
      let rec_left = Rectangle::new(0_f32, 0_f32, (TILE_SIZE*SCALE) as f32, (TILE_SIZE*SCALE-1) as f32);
      let rec_death = Rectangle::new(0_f32, 96_f32, (TILE_SIZE*SCALE) as f32, (TILE_SIZE*SCALE-1) as f32);
-     let death = false;
+     let state = PlayerState::ALIVE;
      let frames = 0;
-     let duration = 0.2_f32;
      let time = 0_f32;
-     let bomb_reload_time = 4_f32;
-     let planting = false;
-
-     Self{ dir ,moving, vec2 , rec_up, rec_down, rec_right, rec_left, rec_death, death,planting, frames, duration, time,bomb_reload_time}
+     let bomb_reload_time = BOMB_RELOAD_TIME;
+     Self{ dir ,moving, vec2 , rec_up, rec_down, rec_right, rec_left, rec_death, state, frames, time,bomb_reload_time}
     }
 
   pub fn go(&mut self,collision:&bool){
@@ -71,9 +73,7 @@ impl Player{
             DIR::RIGHT => {self.vec2.x -= MARGIN}
             DIR::LEFT => {self.vec2.x += MARGIN}
          }
-    }
-    let move_bool = self.moving & !*collision; // Bitwise operation.
-     if move_bool{// Set direction for player movement.
+    }else if self.moving & !*collision{// Set direction for player movement.
       match self.dir{
          DIR::DOWN => {self.vec2.y += SPEED}
          DIR::UP => {self.vec2.y -= SPEED}
@@ -84,17 +84,39 @@ impl Player{
    }
 
    pub fn plant_bomb(&mut self,grid:&mut Grid){
-    let row = (self.vec2.x + BOMB_MARGIN)/ (SCALE * TILE_SIZE) as f32;
-    let column =  (self.vec2.y + BOMB_MARGIN)/ (SCALE * TILE_SIZE) as f32;
+    let row = ((self.vec2.x + BOMB_MARGIN)/ (SCALE * TILE_SIZE) as f32) as i32;
+    let column =  ((self.vec2.y + BOMB_MARGIN)/ (SCALE * TILE_SIZE) as f32) as i32;
 
-     if grid.get_cell(row as i32, column as i32) != EMPTY && !self.planting{
+     if grid.get_cell(row as i32, column as i32) != EMPTY && self.bomb_reload_time < BOMB_RELOAD_TIME{
         return;
-      } else if self.planting{
-         let new_bomb = Bomb::new();
+      } else if self.bomb_reload_time >= BOMB_RELOAD_TIME{
+         let mut new_bomb = Bomb::new();
+
+         let right = grid.get_cell(row+1, column) == WALL || grid.get_cell(row+1, column) == BLOCK ;
+         let left = grid.get_cell(row-1, column) == WALL || grid.get_cell(row-1, column) == BLOCK ;
+         let down = grid.get_cell(row, column+1) == WALL || grid.get_cell(row, column+1) == BLOCK ;
+         let top = grid.get_cell(row, column-1) == WALL || grid.get_cell(row, column-1) == BLOCK ;
+
+         if down{
+          new_bomb.exp_rec.height -= EXPLOSION_CROP;
+         }
+
+         if right{
+          new_bomb.exp_rec.width -= EXPLOSION_CROP;
+         }
+
+         if top && left{
+          new_bomb.exp_rec.y = 3_f32 * EXPLOSION_TILE;
+         }else if top {
+         
+          new_bomb.exp_rec.y = EXPLOSION_TILE;
+         }else if left{
+          new_bomb.exp_rec.y = 2_f32 * EXPLOSION_TILE;
+         }
+
          grid.bomb_vec.push(new_bomb);
          grid.set_cell(row as i32, column as i32, BOMB);
          self.bomb_reload_time = 0_f32;
-         self.planting = false;
       }
    }
 
@@ -139,7 +161,7 @@ impl Player{
 
    pub fn animate(&mut self,frame_time:&f32){
     //When moving true and and death false
-    if self.moving && !self.death{
+    if self.moving && self.state == PlayerState::ALIVE{
     let mut local_rec = &mut self.rec_down;//Default rectangle down as per direction.
     match self.dir{//Check player direction and set default rectangle.
         DIR::UP => {local_rec = &mut self.rec_up}
@@ -148,7 +170,7 @@ impl Player{
         _ => {}
      }
    //Animate the player.
-     if self.time > self.duration{
+     if self.time > ANIM_DURATION{
         self.time = 0_f32;
         self.frames += 1;
     }
@@ -157,11 +179,8 @@ impl Player{
     self.frames = self.frames  % (MAX_FRAME-1);
     
     //Enable or Disable bomb planting.
-    if !self.planting{
+    if self.bomb_reload_time <= BOMB_RELOAD_TIME{
       self.bomb_reload_time += *frame_time;
-      if self.bomb_reload_time > 3_f32{
-        self.planting = true;
-      }
     }
    }
  }

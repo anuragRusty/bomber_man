@@ -13,8 +13,8 @@ const HEIGHT:i32 = (TILE_SIZE * SCALE) * COLS;
 const BLOCK_SHEET:&str = "/home/anurag/bomber_man/src/res/block.png";
 const WALLS_SHEET:&str = "/home/anurag/bomber_man/src/res/walls.png";
 const PLAYER_SHEET:&str = "/home/anurag/bomber_man/src/res/player.png";
-const BOMB_SHEET:&str = "/home/anurag/bomber_man/src/res/bombs.png";
-const EXPLOSION_SHEET:&str = "/home/anurag/bomber_man/src/res/explosions1.png";
+const BOMB_SHEET:&str = "/home/anurag/bomber_man/src/res/bomb.png";
+const EXPLOSION_SHEET:&str = "/home/anurag/bomber_man/src/res/explosions.png";
 const BACKGROUND_COLOR:Color = Color::DARKGREEN;
 
 fn main() {

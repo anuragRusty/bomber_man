@@ -9,31 +9,41 @@ pub const SCALE:i32 = 3;
 pub const MARGIN:i32 = 8;
 pub const MAIN_COLOR:Color = Color::WHITE;
 pub const MAX_FRAME:i32 = 3;
+pub const MAX_WALL_FRAMES:i32 = 7;
+pub const ANIM_DURATION:f32 = 0.2_f32;
 
 //dumb enum values.
 pub const EMPTY:i32 = 0;
 pub const BLOCK:i32 = 1;
 pub const WALL:i32 = 2;
 pub const BOMB:i32 = 3;
+pub const EXPLOSION:i32 = 4;
+pub const FLAME:i32 = 5;
+
+#[derive(PartialEq,Clone)]
+pub enum State{
+    IDEAL,
+    EXPLOADING,
+    EXPLOADED,
+}
 
 #[derive(Clone)]
 pub struct Wall {
     pub vec2:Vector2,
     pub rec:Rectangle,
-    pub duration:f32,
     pub frames:i32,
-    pub frames_max:i32,
     pub time:f32,
-    pub exploading_time:f32,
-    pub exploading:bool,
-    pub exploaded:bool,
+    pub state:State,
 }
 
 impl Wall {
     pub fn new() -> Self {
       let vec2 = Vector2::new(0_f32,0_f32);
       let rec =  Rectangle::new(0_f32, 0_f32, (SCALE*TILE_SIZE) as f32, (SCALE*TILE_SIZE) as f32);
-      Self{vec2:vec2,rec:rec,duration:0.7_f32,frames:0,frames_max:7,time:0_f32,exploading_time:2_f32,exploading:false,exploaded:false}
+      let frames = 0;
+      let time = 0_f32;
+      let state = State::IDEAL;
+      Self { vec2, rec, frames, time, state}
     }
 
     pub fn set_position(&mut self,x:i32,y:i32){
@@ -44,37 +54,22 @@ impl Wall {
         self.rec.x = (TILE_SIZE * SCALE) as f32 * self.frames as f32;
       }
 
-    pub fn remove_wall(&mut self,i:usize,j:usize,cells:&[[i32;15];13],frame_time:&f32){
-         if cells[i+1][j] == BOMB && !self.exploaded {
-            self.exploading_time -= *frame_time;
-            if self.exploading_time < 0_f32{ //Enable the explosion when time is less than 0.
-            self.exploading = true;
-            }
-       
-         }else if cells[i-1][j] == BOMB && !self.exploaded {
-            self.exploading_time -= *frame_time;
-            if self.exploading_time < 0_f32{//Enable the explosion when time is less than 0.
-            self.exploading = true;
-            }
-       
-         }else if cells[i][j+1] == BOMB && !self.exploaded {
-            self.exploading_time -= *frame_time;
-            if self.exploading_time < 0_f32{//Enable the explosion when time is less than 0.
-            self.exploading = true;
-            }
-       
-         }else if cells[i][j-1] == BOMB && !self.exploaded {
-            self.exploading_time -= *frame_time;
-            if self.exploading_time < 0_f32{//Enable the explosion when time is less than 0.
-            self.exploading = true;
-            }
+    pub fn remove_wall(&mut self,i:usize,j:usize,cells:&[[i32;15];13]){
+         if cells[i+1][j] == EXPLOSION && self.state == State::IDEAL{
+            self.state = State::EXPLOADING;
+            }else if cells[i-1][j] == EXPLOSION &&  self.state == State::IDEAL {
+            self.state = State::EXPLOADING;
+            }else if cells[i][j+1] == EXPLOSION &&  self.state == State::IDEAL {
+            self.state = State::EXPLOADING;
+            }else if cells[i][j-1] == EXPLOSION &&  self.state == State::IDEAL {
+            self.state = State::EXPLOADING;
           }
           
          }
     
     pub fn animate(&mut self,frame_time:&f32){
-       if self.exploading{// Start exploading animation if exploading true.
-        if self.time > self.duration{
+       if self.state == State::EXPLOADING{// Start exploading animation if exploading true.
+        if self.time > ANIM_DURATION{
             self.time = 0_f32;
             self.frames += 1;
         }
@@ -82,9 +77,9 @@ impl Wall {
         self.set_frame();
 
         if self.frames == 6 { //In the last frame set exploaded true.
-          self.exploaded = true;
+          self.state = State::EXPLOADED;
         }
-        self.frames = self.frames  % (self.frames_max - 1);
+        self.frames = self.frames  % (MAX_WALL_FRAMES - 1);
      }else{ //Or set frame to default.
         self.frames = 0;
         self.set_frame();
@@ -150,19 +145,20 @@ impl Grid {
         for i in 0..ROWS{
             for j in 0..COLS{
 
-                if self.get_cell(i, j) == BOMB{
+                if self.get_cell(i, j) == BOMB || self.get_cell(i, j) == EXPLOSION{
                     let local_bomb = &mut self.bomb_vec[bomb_count]; //Get BOMB
-                    if !local_bomb.exploading{
-                        local_bomb.set_position(i*TILE_SIZE*SCALE + MARGIN, j*TILE_SIZE*SCALE + MARGIN); //Set position using tile_size
+                    if local_bomb.state == State::IDEAL{
+                        local_bomb.set_position(i*TILE_SIZE*SCALE, j*TILE_SIZE*SCALE); //Set position using tile_size
                     d.draw_texture_rec(bomb_texture, local_bomb.rec, local_bomb.vec2, MAIN_COLOR); //Draw bomb when exploading is false
-                    }else{
-                    local_bomb.set_position_exp(i*TILE_SIZE*SCALE - EXPLOSION_MARGIN , j*TILE_SIZE*SCALE - EXPLOSION_MARGIN); //Set position using explpsion_tile_size
+                    }else if local_bomb.state == State::EXPLOADING {
+                    self.cells[i as usize][j as usize] = EXPLOSION;
+                    local_bomb.set_position_exp(local_bomb.vec2.x - ((EXPLOSION_TILE/2_f32)  - EXPLOSION_MARGIN), local_bomb.vec2.y  - ((EXPLOSION_TILE/2_f32) - EXPLOSION_MARGIN)); //Set position using explpsion_tile_size
                     d.draw_texture_rec(explosion_texture, local_bomb.exp_rec, local_bomb.exp_vec2, MAIN_COLOR);//Draw explosion when exploading is true
                     }
                     local_bomb.animate(frame_time);//Animate the bomb.
     
-                    if local_bomb.exploaded{ //Remove Bomb if its exploaded.
-                        self.bomb_vec.pop();//Remove bomb  vector.
+                     if local_bomb.state == State::EXPLOADED{ //Remove Bomb if its exploaded.
+                        self.bomb_vec.remove(bomb_count);//Remove bomb  vector.
                         self.set_cell(i, j, EMPTY);//Remove the bomb from grid.
                     }else{
                     bomb_count += 1;//Or look other bomb
@@ -179,10 +175,10 @@ impl Grid {
                  local_wall.set_position(i*TILE_SIZE*SCALE, j*TILE_SIZE*SCALE);//Set position for wall.
                  d.draw_texture_rec(wall_texture, local_wall.rec, local_wall.vec2, MAIN_COLOR);//draw static wall objects
                  local_wall.animate(frame_time);//Animate the wall if the exploading is true.
-                 local_wall.remove_wall( i as usize, j as usize,&self.cells,&frame_time);//Remove exploaded walls.
+                 local_wall.remove_wall( i as usize, j as usize,&self.cells);//Remove exploaded walls.
                }//local wall will be drop after this scope
 
-                if self.wall_vec[wall_count].exploaded{ //Remove the exploaded wall from the grid and vector.
+                if self.wall_vec[wall_count].state == State::EXPLOADED{ //Remove the exploaded wall from the grid and vector.
                    self.set_cell(i, j, EMPTY);//Remove from grid.
                    self.wall_vec.remove(wall_count);//Remove from vector.
                  }else{
