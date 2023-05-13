@@ -1,0 +1,39 @@
+DONE -->
+--------------------------------------
+#add background ->  Done
+#add unbreakablewall Done
+#add collison shape to unbreakablewall wall -> Done
+#add breakawablewall ->  Done
+#add breakawablewall individiual wall destruction animation -> Done
+#add collison breakawablewall -> Done
+#add player sprite -> Done
+#add collison player sprite -> Done
+#add bomb -> Done
+#add plant bomb logic -> Done
+#add wall destruction -> Done
+#add player movement -> Done
+#add bomb explosion logic -> Done
+#add bomb explosion animation -> Done
+#add flame logic -> Done
+#add player death logic and animation -> Done
+
+TODO -->
+---------------------------------------
+
+#add gameover logic
+#add score time life pause restart systems.
+#add enemies
+#add enenmies attack logic 
+#add enemies animation and spwan
+#add enemies kill logic
+#add menu
+#add upgrades
+#add audio
+#add dynamic scaling and resolution
+#add levels 
+#add multiplayer
+
+PROGRESS --> 
+---------------------------------------
+
+FIX MAJOR BUG IN EXPLOSION ADD PROPER TILE MAP FOR FLAME --> DONE
