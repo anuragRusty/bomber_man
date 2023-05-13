@@ -5,7 +5,7 @@ use crate::bomb::*;
 use noise::{NoiseFn, Perlin};
 
 pub const TILE_SIZE:f32 = 16_f32;
-pub const SCALE:f32 = 3_f32;
+pub const SCALE:f32 = 2.5_f32;
 
 pub const MAX_FRAME:usize = 3;
 pub const ANIM_DURATION:f32 = 0.22_f32;
