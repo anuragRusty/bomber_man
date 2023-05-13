@@ -9,10 +9,9 @@ use raylib::core::audio::Sound;
 use grid::*;
 use game::*;
 
-const SPRITE_SHEET:&str = "/home/anurag/bomber_man/src/res/sheets5.png";
-const EXP_SOUND:&str = "/home/anurag/bomber_man/src/res/exp.ogg";
+const SPRITE_SHEET:&str = "assets/sheets.png";
+const EXP_SOUND:&str = "assets/exp.ogg";
 
-//sudo ifconfig wlp3s0 down sudo ifconfig wlp3s0 hw ether 70:A6:CC:AF:A4:15
 fn main() {    
     //LOAD -->
     let mut game = Game::new();
