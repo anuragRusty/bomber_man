@@ -71,20 +71,6 @@ impl $name {
     };
 }
 
-#[derive(PartialEq,Clone,Debug,Copy)]
-pub struct Bomb {
-    pub rec2:Rectangle,
-    pub exp_rec2:Rectangle,
-    pub rec:Rectangle,
-    pub exp_rec:Rectangle,
-    pub exp_frames:usize,
-    pub frames:usize,
-    pub time:f32,
-    pub exp_time:f32,
-    pub exploading_time:f32,
-    pub power:usize,
-    pub state:State,
-}
 //Flame Objects
 flame_obj!(FlameLeftEnd);
 flame_obj!(FlameRightEnd);
@@ -120,6 +106,21 @@ impl_set_position!(Bomb,set_position,rec2,SCALED_TILE);
 impl_static_draw!(Bomb);
 impl_draw_anim!(Bomb,draw_exp,anim_exp,exp_frames,exp_rec,exp_rec2,exp_time,EXP_TD_FRAMES);
 impl_exp!(Bomb,chain_exp);
+
+#[derive(PartialEq,Clone,Debug,Copy)]
+pub struct Bomb {
+    pub rec2:Rectangle,
+    pub exp_rec2:Rectangle,
+    pub rec:Rectangle,
+    pub exp_rec:Rectangle,
+    pub exp_frames:usize,
+    pub frames:usize,
+    pub time:f32,
+    pub exp_time:f32,
+    pub exploading_time:f32,
+    pub power:usize,
+    pub state:State,
+}
 
 impl Bomb {
     pub fn new() -> Self{

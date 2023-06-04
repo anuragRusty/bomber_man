@@ -16,8 +16,8 @@ pub const O:f32 = 0_f32;
 pub const FRAMES:[f32;8] = [0.0,16.0,32.0,48.0,64.0,80.0,96.0,108.0];
 //dumb enum values.
 pub const EMPTY:i8 = 0;
-pub const BLOCK:i8 = 1;
-pub const WALL:i8 = 2;
+pub const BLOCK:i8 = 4;
+pub const WALL:i8 = 5;
 pub const BOMB:i8 = 3;
 //sub neg enum
 pub const EXPLOSION:i8 = -1;
@@ -91,7 +91,7 @@ impl_inject_flames!(Grid,inject_flames,EXPLOSION,EMPTY,
     FLAME_END_RIGHT,FLAME_MID_TOP,FLAME_END_TOP,
     FLAME_MID_DOWN,FLAME_END_DOWN,cells);
     
-impl_inject_flames!(Grid,inject_flames_obj,BOMB,GameObjs::Default, 
+impl_inject_flames!(Grid,inject_flames_obj,EXPLOSION,GameObjs::Default, 
     GameObjs::FlameLeftMid(FlameLeftMid::new()),GameObjs::FlameLeftEnd(FlameLeftEnd::new()),
     GameObjs::FlameRightMid(FlameRightMid::new()),GameObjs::FlameRightEnd(FlameRightEnd::new()), 
     GameObjs::FlameTopMid(FlameTopMid::new()), GameObjs::FlameTopEnd(FlameTopEnd::new()),
@@ -261,6 +261,7 @@ impl Grid {
                             local_bomb.anim_exp(frame_time);
                         }
                          self.cells[i][j] = EXPLOSION; // Give Signal
+                         self.inject_flames_obj(power, i, j);
                          self.inject_flames(power,i, j); // Injects flames consts in matrix 
                       },
                       State::EXPLOADED => {

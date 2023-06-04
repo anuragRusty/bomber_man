@@ -138,12 +138,9 @@ impl Player{
       } else if self.bomb_reload_time >= BOMB_RELOAD_TIME{
          let mut new_bomb = Bomb::new();
          new_bomb.set_position(row, column);
-         let power = new_bomb.power;
          self.bomb_reload_time = 0_f32;
-
          grid.cells[row][column] = BOMB;
          grid.game_objs[row][column] = GameObjs::Bomb(new_bomb);
-         grid.inject_flames_obj(power,row, column);
       }
    }
 
