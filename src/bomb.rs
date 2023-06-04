@@ -1,10 +1,10 @@
 use raylib::prelude::*;
-use crate::{grid::{TILE_SIZE, MAX_FRAME,SCALE,ANIM_DURATION,Obj,DObj,O,FRAMES,EXPLOSION,FLAME_MID_DOWN,FLAME_MID_LEFT,FLAME_MID_RIGHT,FLAME_MID_TOP},impl_set_position,impl_static_draw};
-use crate::{anim_obj,impl_exp};
+use crate::{grid::{TILE_SIZE, MAX_FRAME,ANIM_DURATION,O,FRAMES,EXPLOSION,FLAME_MID_DOWN,FLAME_MID_LEFT,FLAME_MID_RIGHT,FLAME_MID_TOP, SCALED_TILE},impl_set_position,impl_static_draw};
+use crate::{impl_exp};
 use crate::objects::{State};
 
 const BOMB_Y:f32 = 96_f32;
-const EXP_TIME:f32 = 3_f32;
+const EXP_TIME:f32 = 5_f32;
 const EXP_TD_FRAMES:[f32;4] = [32_f32,112_f32,192_f32,272_f32];
 
 const F_LEFT_END_FRAMES:[f32;4] = [0_f32,80_f32,160_f32,240_f32];
@@ -19,15 +19,29 @@ const F_DOWN_MID_Y:f32 = 176_f32;
 const F_DOWN_END_Y:f32 = 192_f32;
 const EXP_FLAME_LR_Y:f32 = 160_f32;
 
+macro_rules! flame_obj {
+    ($name:ident) => {
+      #[derive(PartialEq,Clone,Debug,Copy)]
+       pub struct $name {
+         pub rec:Rectangle,
+         pub rec2:Rectangle,
+         pub frames:usize,
+         pub time:f32,
+         pub state:State,
+        }
+    };
+}
+
 macro_rules! impl_new {
     ($name:ident,$frames_arr:expr,$y:expr) => {
         impl $name {
             pub fn new() -> Self{
                 let frames = 0;
                 let time = 0_f32;
+                let state = State::IDEAL;
                 let rec = Rectangle::new($frames_arr[frames],$y,TILE_SIZE,TILE_SIZE);
-                let rec2 = Rectangle::new(O,O,TILE_SIZE*SCALE,TILE_SIZE*SCALE);
-                Self{rec,rec2,frames,time}
+                let rec2 = Rectangle::new(O,O,SCALED_TILE,SCALED_TILE);
+                Self{rec,rec2,frames,time,state}
             }
         }
     };
@@ -39,8 +53,8 @@ macro_rules! impl_draw_anim {
 impl $name {
 
     pub fn $fn_name(&mut self,texture:&Texture2D,d:&mut RaylibDrawHandle,i:usize,j:usize){
-        self.$rec2.x = i as f32 * TILE_SIZE*SCALE;
-        self.$rec2.y = j as f32 * TILE_SIZE*SCALE;
+        self.$rec2.x = i as f32 * SCALED_TILE;
+        self.$rec2.y = j as f32 * SCALED_TILE;
         d.draw_texture_pro(texture, self.$rec, self.$rec2, Vector2::default(),O, Color::WHITE);  
     }
 
@@ -71,17 +85,16 @@ pub struct Bomb {
     pub power:usize,
     pub state:State,
 }
-
 //Flame Objects
-anim_obj!(FlameLeftEnd);
-anim_obj!(FlameRightEnd);
-anim_obj!(FlameTopEnd);
-anim_obj!(FlameDownEnd);
+flame_obj!(FlameLeftEnd);
+flame_obj!(FlameRightEnd);
+flame_obj!(FlameTopEnd);
+flame_obj!(FlameDownEnd);
 
-anim_obj!(FlameLeftMid);
-anim_obj!(FlameRightMid);
-anim_obj!(FlameTopMid);
-anim_obj!(FlameDownMid);
+flame_obj!(FlameLeftMid);
+flame_obj!(FlameRightMid);
+flame_obj!(FlameTopMid);
+flame_obj!(FlameDownMid);
 
 impl_new!(FlameLeftEnd,F_LEFT_END_FRAMES,EXP_FLAME_LR_Y);
 impl_new!(FlameRightEnd,F_RIGHT_END_FRAMES,EXP_FLAME_LR_Y);
@@ -103,21 +116,21 @@ impl_draw_anim!(FlameRightMid,draw,anim,frames,rec,rec2,time,F_RIGHT_MID_FRAMES)
 impl_draw_anim!(FlameTopMid,draw,anim,frames,rec,rec2,time,EXP_TD_FRAMES);
 impl_draw_anim!(FlameDownMid,draw,anim,frames,rec,rec2,time,EXP_TD_FRAMES);
 
-impl_set_position!(Obj,Bomb,set_position,rec2);
+impl_set_position!(Bomb,set_position,rec2,SCALED_TILE);
 impl_static_draw!(Bomb);
 impl_draw_anim!(Bomb,draw_exp,anim_exp,exp_frames,exp_rec,exp_rec2,exp_time,EXP_TD_FRAMES);
 impl_exp!(Bomb,chain_exp);
 
 impl Bomb {
     pub fn new() -> Self{
-        let rec2 = Rectangle::new(O,O,TILE_SIZE*SCALE,TILE_SIZE*SCALE);
+        let rec2 = Rectangle::new(O,O,SCALED_TILE,SCALED_TILE);
         let rec = Rectangle::new(O,BOMB_Y,TILE_SIZE,TILE_SIZE);
         let frames = 0;
         let time = 0_f32;
         let exp_time = 0_f32;
         let exploading_time = EXP_TIME;
         let exp_frames = 0;
-        let exp_rec2 = Rectangle::new(O,O,TILE_SIZE*SCALE,TILE_SIZE*SCALE);
+        let exp_rec2 = Rectangle::new(O,O,SCALED_TILE,SCALED_TILE);
         let exp_rec = Rectangle::new(EXP_TD_FRAMES[exp_frames],EXP_FLAME_LR_Y,TILE_SIZE,TILE_SIZE);
         let power = 7;
         let state = State::IDEAL;
@@ -133,16 +146,18 @@ impl Bomb {
     }
 
     pub fn play_sound(&self,audio:&mut RaylibAudio,sound:&Sound){
-       if self.frames == MAX_FRAME-1{ 
+       if self.state == State::EXPLOADING {
          audio.play_sound(sound);
        }
     }
-}
 
-impl DObj for Bomb{
+    pub fn detonating(&mut self,frame_time:&f32){
+      self.exploading_time -= *frame_time;
+    }
+
     fn animate(&mut self,frame_time:&f32){
         if self.state == State::IDEAL{
-        if self.time > EXP_TIME/MAX_FRAME as f32{
+        if self.time > (EXP_TIME/MAX_FRAME as f32){
             self.time = 0_f32;
             self.frames += 1;
         }
@@ -150,7 +165,12 @@ impl DObj for Bomb{
         self.rec.x = FRAMES[self.frames];
         self.frames = self.frames  % MAX_FRAME;
      }
-     self.exploading_time -= *frame_time;
+    }
+
+    pub fn update(&mut self,frame_time:&f32,audio:&mut RaylibAudio,sound:&Sound){
+        self.play_sound(audio, sound);
+        self.animate(frame_time);
+        self.detonating(frame_time);
+        self.explode();
     }
 }
-

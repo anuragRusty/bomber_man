@@ -6,7 +6,7 @@ const SPEED:f32 = 30_f32 * SCALE;
 const MAX_PLAYER_FRAME:usize = 4;
 const P_COLORS:&[Color;3] = &[Color::RED,Color::YELLOW,Color::WHITE];
 const MARGIN:f32 = 2_f32;
-const BOMB_RELOAD_TIME:f32 = 3_f32;
+const BOMB_RELOAD_TIME:f32 = 1_f32;
 const BOMB_MARGIN:f32 = TILE_SIZE/2_f32;
 
 const LD_Y:f32 = 48_f32;
@@ -130,19 +130,20 @@ impl Player{
    }
 
    pub fn plant_bomb(&mut self,grid:&mut Grid){
-    let row = ((self.rec2.x + BOMB_MARGIN)/ (SCALE * TILE_SIZE)) as usize;
-    let column =  ((self.rec2.y + BOMB_MARGIN)/ (SCALE * TILE_SIZE)) as usize;
+    let row = ((self.rec2.x + BOMB_MARGIN)/ SCALED_TILE) as usize;
+    let column =  ((self.rec2.y + BOMB_MARGIN)/ SCALED_TILE) as usize;
 
-    if grid.get_cell(row, column) != EMPTY && self.bomb_reload_time < BOMB_RELOAD_TIME{
+    if grid.cells[row][column] != EMPTY && self.bomb_reload_time < BOMB_RELOAD_TIME{
         return;
       } else if self.bomb_reload_time >= BOMB_RELOAD_TIME{
-         let new_bomb = Bomb::new();
+         let mut new_bomb = Bomb::new();
+         new_bomb.set_position(row, column);
          let power = new_bomb.power;
-         
-            grid.set_cell(row, column, BOMB);
-            grid.game_objs[row as usize][column as usize] = GameObjs::Bomb(new_bomb);
-            grid.inject_flames_obj4(power,row as usize, column as usize);
-            self.bomb_reload_time = 0_f32;
+         self.bomb_reload_time = 0_f32;
+
+         grid.cells[row][column] = BOMB;
+         grid.game_objs[row][column] = GameObjs::Bomb(new_bomb);
+         grid.inject_flames_obj(power,row, column);
       }
    }
 

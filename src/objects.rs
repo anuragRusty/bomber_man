@@ -1,6 +1,6 @@
 use raylib::{prelude::*};
 use rand::Rng;
-use crate::grid::{SCALE,TILE_SIZE,MAX_RAND_FRAME,Obj,DObj,FRAMES,O,EXPLOSION,ANIM_DURATION,FLAME_MID_DOWN,FLAME_MID_LEFT,FLAME_MID_RIGHT,FLAME_MID_TOP};
+use crate::grid::{SCALE,TILE_SIZE,SCALED_TILE,MAX_RAND_FRAME,FRAMES,O,EXPLOSION,ANIM_DURATION,FLAME_MID_DOWN,FLAME_MID_LEFT,FLAME_MID_RIGHT,FLAME_MID_TOP};
 
 const EMPTY_Y:f32 = 32_f32;
 const GRASS_Y:f32 = 112_f32;
@@ -44,11 +44,11 @@ macro_rules! impl_rand_obj {
 
 #[macro_export]
 macro_rules! impl_set_position {
-    ($trt:ident,$name:ident,$fn:ident,$vec_field:ident) => {
-        impl $trt for $name {
-           fn $fn(&mut self, x: f32, y: f32) {
-                self.$vec_field.x = x;
-                self.$vec_field.y = y;
+    ($name:ident,$fn:ident,$vec_field:ident,$scale:expr) => {
+        impl $name {
+          pub fn $fn(&mut self, i:usize, j: usize) {
+                self.$vec_field.x = i as f32 * $scale;
+                self.$vec_field.y = j as f32 * $scale;
             }
         }
     };
@@ -105,47 +105,52 @@ pub struct Wall {
 
 impl Wall {
     pub fn new() -> Self {
-      let rec2 =  Rectangle::new(O, O, TILE_SIZE*SCALE , TILE_SIZE*SCALE);
+      let rec2 =  Rectangle::new(O, O, SCALED_TILE , SCALED_TILE);
       let rec =  Rectangle::new(O, O, TILE_SIZE , TILE_SIZE);
       let frames = 0;
       let time = O;
       let state = State::IDEAL;
       Self { rec2, rec, frames, time, state}
     }
-}
 
-impl DObj for Wall{
+    pub fn update(&mut self,frame_time:&f32){
+        match self.state {
+            State::EXPLOADING => {
+                self.update_state();
+                self.animate(frame_time);
+            }
+            _ => {}
+        }
+    }
+
+    fn update_state(&mut self){
+        if self.frames >= 6 { // On the last frame set the state exploaded
+          self.state = State::EXPLOADED;
+        }
+    }
+
     fn animate(&mut self,frame_time:&f32){
-        if self.state == State::EXPLOADING{// Start exploading animation if exploading true.
-         if self.time > ANIM_DURATION{
-             self.time = 0_f32;
-             self.frames += 1;
-         }
-         self.time += *frame_time;
-         self.rec.x = FRAMES[self.frames];
- 
-         if self.frames == 6 { //In the last frame set exploaded true.
-           self.state = State::EXPLOADED;
-         }
-         self.frames = self.frames  % (MAX_WALL_FRAMES - 1);
-      }else{ //Or set frame to default.
-         self.frames = 0;
-         self.rec.x = FRAMES[self.frames];
-      }
-     }
+        if self.time > ANIM_DURATION{
+            self.time = 0_f32;
+            self.frames += 1;
+        }
+        self.time += *frame_time;
+        self.rec.x = FRAMES[self.frames];
+        self.frames = self.frames  % MAX_WALL_FRAMES;
+    }
 }
 
-impl_set_position!(Obj,Wall,set_position,rec2);
+impl_set_position!(Wall,set_position,rec2,SCALED_TILE);
 impl_static_draw!(Wall);
-impl_exp!(Wall,expload_wall);
+impl_exp!(Wall,exploade);
 
 static_obj!(Empty);
 static_obj!(Block);
 static_obj!(Grass);
 
-impl_set_position!(Obj,Block,set_position,rec2);
-impl_set_position!(Obj,Empty,set_position,rec2);
-impl_set_position!(Obj,Grass,set_position,rec2);
+impl_set_position!(Block,set_position,rec2,SCALED_TILE);
+impl_set_position!(Empty,set_position,rec2,SCALED_TILE);
+impl_set_position!(Grass,set_position,rec2,SCALED_TILE);
 
 impl_rand_obj!(Block,4,0,BLOCK_Y);
 impl_rand_obj!(Grass,8,7,GRASS_Y);
