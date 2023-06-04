@@ -1,9 +1,0 @@
-/home/anurag/bomber_man/target/debug/build/raylib-sys-f9346de29bb9caf7/out/lib/libraylib.a
-/home/anurag/bomber_man/target/debug/build/raylib-sys-f9346de29bb9caf7/out/include/raylib.h
-/home/anurag/bomber_man/target/debug/build/raylib-sys-f9346de29bb9caf7/out/include/rlgl.h
-/home/anurag/bomber_man/target/debug/build/raylib-sys-f9346de29bb9caf7/out/include/physac.h
-/home/anurag/bomber_man/target/debug/build/raylib-sys-f9346de29bb9caf7/out/include/raymath.h
-/home/anurag/bomber_man/target/debug/build/raylib-sys-f9346de29bb9caf7/out/include/raudio.h
-/home/anurag/bomber_man/target/debug/build/raylib-sys-f9346de29bb9caf7/out/lib/pkgconfig/raylib.pc
-/home/anurag/bomber_man/target/debug/build/raylib-sys-f9346de29bb9caf7/out/lib/cmake/raylib/raylib-config-version.cmake
-/home/anurag/bomber_man/target/debug/build/raylib-sys-f9346de29bb9caf7/out/lib/cmake/raylib/raylib-config.cmake
