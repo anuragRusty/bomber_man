@@ -16,18 +16,18 @@ DONE -->
 #add bomb explosion animation -> Done
 #add flame logic -> Done
 #add player death logic and animation -> Done
+##add gameover logic -> Nearly Done.
 
 TODO -->
 ---------------------------------------
 
-#add gameover logic
 #add score time life pause restart systems.
 #add enemies
 #add enenmies attack logic 
 #add enemies animation and spwan
 #add enemies kill logic
 #add menu
-#add upgrades
+#add upgrades and bonuses
 #add audio
 #add dynamic scaling and resolution
 #add levels 
@@ -35,5 +35,3 @@ TODO -->
 
 PROGRESS --> 
 ---------------------------------------
-
-FIX MAJOR BUG IN EXPLOSION ADD PROPER TILE MAP FOR FLAME --> DONE

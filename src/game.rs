@@ -42,7 +42,7 @@ macro_rules! impl_text_obj {
             Self { rec, rec2, frames, time}
            }
         
-            fn draw(&mut self,d:&mut RaylibDrawHandle,texts:&Texture2D,frame_time:&f32){
+            fn draw_animate(&mut self,d:&mut RaylibDrawHandle,texts:&Texture2D,frame_time:&f32){
               d.draw_texture_pro(texts, self.rec,self.rec2, Vector2::default(), 0.0, Color::WHITE);
 
               if self.time > $dur{
@@ -97,7 +97,7 @@ pub struct Game {
     pub grid:Grid,
     game_over_text:GameOver,
     paused_text:Paused,
-    cd_text:CountDown,
+    count_down:CountDown,
     frames:usize,
     time:f32,
 }
@@ -113,18 +113,19 @@ impl Game {
      let player = Player::new();
      let game_over_text = GameOver::new(screen_w,screen_h);
      let paused_text = Paused::new(screen_w,screen_h);
-     let cd_text = CountDown::new(screen_w,screen_h);
+     let count_down = CountDown::new(screen_w,screen_h);
      let frames = 0;
      let time = 0_f32;
-     Self { state, option,menu,screen_w,screen_h, player,grid,game_over_text,paused_text,cd_text,frames,time}
+     Self { state, option,menu,screen_w,screen_h, player,grid,game_over_text,paused_text,count_down,frames,time}
    }
 
  pub fn update(&mut self,rl:&mut raylib::RaylibHandle,frame_time:&f32){
     self.handle_game_state(rl);
     
     if self.state == GameState::RUNNING{
-    let collisions = self.player.collision(&self.grid.cells);
-    self.player.control(rl, &collisions,frame_time,&mut self.grid);
+   // let collisions = self.player.collision(&self.grid.cells);
+    self.player.control(rl,frame_time,&mut self.grid);
+    self.player.update(frame_time);
     }
     
  }
@@ -132,7 +133,7 @@ impl Game {
  pub fn render(&mut self,d:&mut RaylibDrawHandle,sheets:&Texture2D,audio:&mut RaylibAudio,sounds:&Sound,frame_time:&f32){
        d.clear_background(BACKGROUND_COLOR);   
        self.grid.render(d, sheets,audio,sounds,frame_time);
-       self.player.draw(d,sheets,frame_time);
+       self.player.draw(d,sheets);
        self.draw_game_state(d,sheets,frame_time);
     }
 
@@ -158,9 +159,9 @@ pub fn handle_game_state(&mut self,rl:&mut RaylibHandle){
 
    pub fn draw_game_state(&mut self,d:&mut RaylibDrawHandle,texts:&Texture2D,frame_time:&f32){
       match self.state{
-        GameState::GAMEOVER => {self.game_over_text.draw(d, texts,frame_time)}
-        GameState::PAUSED => {self.paused_text.draw(d, texts, frame_time)}
-        GameState::STARTING => {self.cd_text.draw(d, texts, frame_time); self.anim_cd(frame_time)}
+        GameState::GAMEOVER => {self.game_over_text.draw_animate(d, texts,frame_time)}
+        GameState::PAUSED => {self.paused_text.draw_animate(d, texts, frame_time)}
+        GameState::STARTING => {self.count_down.draw_animate(d, texts, frame_time); self.anim_cd(frame_time)}
       _ => {} 
    
    }  
@@ -172,6 +173,6 @@ pub fn handle_game_state(&mut self,rl:&mut RaylibHandle){
     }
     self.time += *frame_time;
     self.frames %= CD_Y.len();
-    self.cd_text.rec.y = CD_Y[self.frames];
+    self.count_down.rec.y = CD_Y[self.frames];
   }   
 }

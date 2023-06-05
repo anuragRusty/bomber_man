@@ -4,8 +4,11 @@ use crate::objects::*;
 use crate::bomb::*;
 use noise::{NoiseFn, Perlin};
 
+pub type CollisonBools = (bool,bool,bool,bool,bool);
+pub type Position = (usize,usize);
+
 pub const TILE_SIZE:f32 = 16_f32;
-pub const SCALE:f32 = 2.5_f32;
+pub const SCALE:f32 = 3_f32;
 pub const SCALED_TILE:f32 = TILE_SIZE*SCALE;
 
 pub const MAX_FRAME:usize = 3;
@@ -18,7 +21,7 @@ pub const FRAMES:[f32;8] = [0.0,16.0,32.0,48.0,64.0,80.0,96.0,108.0];
 pub const EMPTY:i8 = 0;
 pub const BLOCK:i8 = 4;
 pub const WALL:i8 = 5;
-pub const BOMB:i8 = 3;
+pub const BOMB:i8 = 1;
 //sub neg enum
 pub const EXPLOSION:i8 = -1;
 pub const FLAME_MID_LEFT:i8 = -2; 
@@ -262,7 +265,7 @@ impl Grid {
                         }
                          self.cells[i][j] = EXPLOSION; // Give Signal
                          self.inject_flames_obj(power, i, j);
-                         self.inject_flames(power,i, j); // Injects flames consts in matrix 
+                         self.inject_flames(power,i, j); // Injects flames consts in matrix to give signal to flame objs
                       },
                       State::EXPLOADED => {
                         self.eject_flames(power, i, j);
@@ -330,5 +333,36 @@ impl Grid {
                }  
             }
         }
+    }
+
+    pub fn get_collisions(&self,position:Position,obj_rec:Rectangle) -> CollisonBools {
+      let (i,j) = position;
+      // Collison bools
+      let mut fatal_coll = false; // for Explosion,Flame and Enemies
+      let mut neutral_coll = false; // For Walls and Blocks.
+      let bonus_coll = false; // For Bonus Coins
+      let upgrade_coll = false; // For Upgrades Bombs and Life
+      let win_coll = false; // For reaching the winning place
+
+      for r in (i)..=(i+1){
+         for c in (j)..=(j+1){
+             let cell = self.cells[r][c];
+             let cell_x = SCALED_TILE * (r as f32);
+             let cell_y = SCALED_TILE * (c as f32);
+
+             if cell_x + SCALED_TILE > obj_rec.x && cell_x < obj_rec.x + obj_rec.width &&
+                cell_y + SCALED_TILE > obj_rec.y && cell_y < obj_rec.y + obj_rec.height {
+
+                  if cell == BLOCK || cell == WALL{
+                     neutral_coll = true;  
+                  }
+                  
+                  if cell < EMPTY {
+                     fatal_coll = true;  
+                  }
+                }
+             }
+          }
+      return (fatal_coll,neutral_coll,bonus_coll,upgrade_coll,win_coll);
     }        
  }

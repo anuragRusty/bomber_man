@@ -4,7 +4,7 @@ use crate::{impl_exp};
 use crate::objects::{State};
 
 const BOMB_Y:f32 = 96_f32;
-const EXP_TIME:f32 = 5_f32;
+const EXP_TIME:f32 = 7_f32;
 const EXP_TD_FRAMES:[f32;4] = [32_f32,112_f32,192_f32,272_f32];
 
 const F_LEFT_END_FRAMES:[f32;4] = [0_f32,80_f32,160_f32,240_f32];

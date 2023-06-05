@@ -16,6 +16,11 @@ const DS_Y:f32 = 80_f32;
 const LRD_FRAMES:&[f32;4] = &[0_f32,16_f32,32_f32,48_f32];
 const TDS_FRAMES:&[f32;4] = &[64_f32,80_f32,96_f32,112_f32];
 const STAND_FRAMES:&[usize;2] = &[0,3];
+// Collison shape const for player
+const COLL_MARGIN_X:f32 = 3_f32*SCALE;
+const COLL_MARGIN_Y:f32 = 2_f32*SCALE;
+const PLAYER_HEIGHT:f32 = 12_f32*SCALE;
+const PLAYER_WIDTH:f32 = 9_f32*SCALE;
 
 #[derive(Clone,PartialEq,Debug,Copy)]
 pub enum DIR {
@@ -90,12 +95,11 @@ impl_dir_draw!(Player,draw_spawn,rec_spawn);
 
 impl Player{
    pub fn new() -> Self {
-     let tile_size = SCALE * TILE_SIZE;
      let dir = DIR::Down;
      let moving = false;
      let tint = P_COLORS[2];
      let frames = 0;
-     let rec2 =  Rectangle::new(tile_size, tile_size, tile_size, tile_size);
+     let rec2 =  Rectangle::new(SCALED_TILE, SCALED_TILE, SCALED_TILE, SCALED_TILE);
      let rec_up = Rectangle::new(LRD_FRAMES[frames], RT_Y, TILE_SIZE, TILE_SIZE);
      let rec_down = Rectangle::new(TDS_FRAMES[frames], LD_Y, TILE_SIZE, TILE_SIZE); 
      let rec_right = Rectangle::new(LRD_FRAMES[frames], RT_Y, TILE_SIZE, TILE_SIZE);
@@ -109,8 +113,8 @@ impl Player{
      Self{ dir ,moving,tint, rec2 , rec_up, rec_down, rec_right, rec_left,rec_spawn,rec_death, state, frames, time,ds_delay,bomb_reload_time}
     }
 
-  pub fn go(&mut self,collision:&bool,frame_time:&f32){
-    if *collision{ // if collison is true push to opposite direction using margin value.
+  pub fn go(&mut self,collision:bool,frame_time:&f32){
+    if collision{ // if collison is true push to opposite direction using margin value.
         match self.dir{
             DIR::Down=> {self.dir = self.dir.flip(); self.rec2.y -= MARGIN}
             DIR::Up => {self.dir = self.dir.flip();self.rec2.y += MARGIN;}
@@ -118,7 +122,7 @@ impl Player{
             DIR::Left => {self.dir = self.dir.flip();self.rec2.x += MARGIN;}
             _ => {}
          }
-    }else if self.moving & !*collision{// Set direction for player movement.
+    }else if self.moving & !collision{// Set direction for player movement.
       match self.dir{
          DIR::Down => {self.rec2.y += SPEED * *frame_time}
          DIR::Up => {self.rec2.y -= SPEED * *frame_time}
@@ -130,46 +134,47 @@ impl Player{
    }
 
    pub fn plant_bomb(&mut self,grid:&mut Grid){
-    let row = ((self.rec2.x + BOMB_MARGIN)/ SCALED_TILE) as usize;
-    let column =  ((self.rec2.y + BOMB_MARGIN)/ SCALED_TILE) as usize;
-
-    if grid.cells[row][column] != EMPTY && self.bomb_reload_time < BOMB_RELOAD_TIME{
+     let position = self.get_position();
+     let (i,j) = position;
+    if grid.cells[i][j] != EMPTY && self.bomb_reload_time < BOMB_RELOAD_TIME{
         return;
       } else if self.bomb_reload_time >= BOMB_RELOAD_TIME{
          let mut new_bomb = Bomb::new();
-         new_bomb.set_position(row, column);
+         new_bomb.set_position(i,j);
          self.bomb_reload_time = 0_f32;
-         grid.cells[row][column] = BOMB;
-         grid.game_objs[row][column] = GameObjs::Bomb(new_bomb);
+         grid.cells[i][j] = BOMB;
+         grid.game_objs[i][j] = GameObjs::Bomb(new_bomb);
       }
    }
 
-   pub fn control(&mut self,rl:&mut RaylibHandle,collisions:&[bool;2],frame_time:&f32,grid:&mut Grid){
-    let wb_collision =  &collisions[0];
-    let flame_exp = collisions[1];
-    
+   pub fn control(&mut self,rl:&mut RaylibHandle,frame_time:&f32,grid:&mut Grid){
+    let obj_rec = self.get_coll_shape();
+    let position = self.get_position();
+    let collisions = grid.get_collisions(position, obj_rec);
+    let (fatal_coll,neutral_coll,_bonus_coll,_upgrade_coll,_win_coll) = collisions;
+
     match self.state {
     State2::ALIVE => {
-    if flame_exp {
+    if fatal_coll {
        self.state = State2::DYING;
-       self.frames = 0; 
+       self.frames = 0;  // BUG FIX for death ANIME;
     }
     else if rl.is_key_down(KeyboardKey::KEY_UP) && self.dir != DIR::NotUp{//Set direction and start movement.
         self.dir = DIR::Up;
         self.moving = true;
-        self.go(wb_collision,frame_time);
+        self.go(neutral_coll,frame_time);
     }else if rl.is_key_down(KeyboardKey::KEY_DOWN) && self.dir != DIR::NotDown{
         self.dir = DIR::Down;
         self.moving = true;
-        self.go(wb_collision,frame_time);
+        self.go(neutral_coll,frame_time);
     }else if rl.is_key_down(KeyboardKey::KEY_LEFT) && self.dir != DIR::NotLeft{
         self.dir = DIR::Left;
         self.moving = true;
-        self.go(wb_collision,frame_time);
+        self.go(neutral_coll,frame_time);
     }else if rl.is_key_down(KeyboardKey::KEY_RIGHT) && self.dir != DIR::NotRight{
         self.dir = DIR::Right;
         self.moving = true;
-        self.go(wb_collision,frame_time);
+        self.go(neutral_coll,frame_time);
     }else if rl.is_key_down(KeyboardKey::KEY_B) {
         self.plant_bomb(grid);
     }else{
@@ -180,7 +185,7 @@ impl Player{
   }
      
  }
-   pub fn draw(&mut self,d:&mut RaylibDrawHandle,player_texture:&Texture2D,frame_time:&f32){    // Draw and update function.
+   pub fn draw(&mut self,d:&mut RaylibDrawHandle,player_texture:&Texture2D){    // Draw and update function.
    match self.state {
      State2::ALIVE =>  match self.dir{   //Draw the player on screen.
         DIR::Down => { self.draw_down(player_texture, d)}
@@ -195,14 +200,21 @@ impl Player{
       State2::SPAWN => {self.draw_spawn(player_texture, d);}
       State2::DYING => {self.draw_death(player_texture, d);}
     _ => {}   
-   }
-   self.animate(frame_time);  //Animate the player.  
+   }  
 }
 
-   pub fn animate(&mut self,frame_time:&f32){
-    if self.bomb_reload_time <= BOMB_RELOAD_TIME{ //Enable or Disable bomb planting.
+  pub fn update(&mut self,frame_time:&f32){
+    self.bomb_reload(frame_time);
+    self.animate(frame_time);
+  }
+
+  pub fn bomb_reload(&mut self,frame_time:&f32){
+    if self.bomb_reload_time <= BOMB_RELOAD_TIME { //Enable or Disable bomb planting.
         self.bomb_reload_time += *frame_time;
       }
+  }
+
+  pub fn animate(&mut self,frame_time:&f32){ 
     let mut local_rec = &mut self.rec_down;//Default rectangle down as per direction.
     let mut local_frames = TDS_FRAMES;
 
@@ -219,8 +231,6 @@ impl Player{
             self.ds_delay = 0.88;
             if self.frames >= MAX_FRAME{
             self.state = State2::DEAD;
-            self.rec2.x = TILE_SIZE*SCALE;
-            self.rec2.y = TILE_SIZE*SCALE;
             self.frames = 0;
         }
         self.tint = P_COLORS[self.frames % (P_COLORS.len()-1)];
@@ -253,38 +263,16 @@ impl Player{
     }
   }
 
-  pub fn collision(&self,cells:&Vec<Vec<i8>>) -> [bool;2] {
-    let mut w_b = false;
-    let mut flame_exp = false;
-    let scaled_tile = (TILE_SIZE * SCALE) as usize;
-    let scaled_margin:usize = (MARGIN * SCALE) as usize;
-    //Set player height width with a margin.
-    let player_height = scaled_tile -  scaled_margin;
-    let player_width = scaled_tile - scaled_margin;
-    let player_i = ((self.rec2.x + BOMB_MARGIN) / (SCALE * TILE_SIZE)) as usize;
-    let player_j = ((self.rec2.y + BOMB_MARGIN) / (SCALE * TILE_SIZE)) as usize;
-    let player_x = self.rec2.x as usize +  scaled_margin; 
-    let player_y = self.rec2.y as usize +  scaled_margin;
-    //Iterate over grid check collison using collison formula.
-    for i in (player_i-1)..=(player_i+1)  {
-        for j in (player_j-1)..=(player_j+1) {
-            let cell = cells[i][j];
-            if  cell < WALL + BLOCK {
-                let cell_x = i * scaled_tile + scaled_margin;
-                let cell_y = j * scaled_tile + scaled_margin;
-                let cell_width = scaled_tile - scaled_margin;
-                let cell_height = scaled_tile - scaled_margin;
-                if player_x + player_width > cell_x && player_x < cell_x + cell_width &&
-                   player_y + player_height > cell_y && player_y < cell_y + cell_height {
-                    if  cell == WALL || cell == BLOCK{
-                    w_b = true;
-                    }else if  cell < 0{
-                        flame_exp = true;
-                        }
-                   }
-                 }
-               }
-            }
-    return [w_b,flame_exp]
-}
+  pub fn get_coll_shape(&self) -> Rectangle {
+     let x = self.rec2.x + COLL_MARGIN_X;
+     let y = self.rec2.y + COLL_MARGIN_Y;
+     let rec = Rectangle::new(x,y,PLAYER_WIDTH,PLAYER_HEIGHT);
+     return rec;
+  }
+
+  pub fn get_position(&self) -> Position {
+    let i = ((self.rec2.x + BOMB_MARGIN)/ SCALED_TILE) as usize;
+    let j =  ((self.rec2.y + BOMB_MARGIN)/ SCALED_TILE) as usize;
+    return (i,j);
+  }
 }
