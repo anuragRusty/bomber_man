@@ -3,6 +3,9 @@ use crate::{grid::{TILE_SIZE, MAX_FRAME,ANIM_DURATION,O,FRAMES,EXPLOSION,FLAME_M
 use crate::{impl_exp};
 use crate::objects::{State};
 
+pub const BOMB_POWER_LEVEL:[usize;5] = [2,3,5,7,10];
+pub const MAX_BOMB_POWER:usize = BOMB_POWER_LEVEL[BOMB_POWER_LEVEL.len()-1];
+
 const BOMB_Y:f32 = 96_f32;
 const EXP_TIME:f32 = 7_f32;
 const EXP_TD_FRAMES:[f32;4] = [32_f32,112_f32,192_f32,272_f32];

@@ -5,7 +5,7 @@ use crate::bomb::*;
 const SPEED:f32 = 30_f32 * SCALE;
 const MAX_PLAYER_FRAME:usize = 4;
 const P_COLORS:&[Color;3] = &[Color::RED,Color::YELLOW,Color::WHITE];
-const MARGIN:f32 = 2_f32;
+const MARGIN:f32 = 0.7*SCALE;
 const BOMB_RELOAD_TIME:f32 = 1_f32;
 const BOMB_MARGIN:f32 = TILE_SIZE/2_f32;
 
@@ -19,7 +19,7 @@ const STAND_FRAMES:&[usize;2] = &[0,3];
 // Collison shape const for player
 const COLL_MARGIN_X:f32 = 3_f32*SCALE;
 const COLL_MARGIN_Y:f32 = 2_f32*SCALE;
-const PLAYER_HEIGHT:f32 = 12_f32*SCALE;
+const PLAYER_HEIGHT:f32 = 13_f32*SCALE;
 const PLAYER_WIDTH:f32 = 9_f32*SCALE;
 
 #[derive(Clone,PartialEq,Debug,Copy)]
@@ -69,6 +69,7 @@ pub struct Player{
     pub rec_left:Rectangle,
     pub rec_spawn:Rectangle,
     pub rec_death:Rectangle,
+    pub rec_shadow:Rectangle,
     pub state:State2,
     pub frames:usize,
     pub time:f32,
@@ -90,8 +91,9 @@ impl_dir_draw!(Player,draw_down,rec_down);
 impl_dir_draw!(Player,draw_up,rec_up);
 impl_dir_draw!(Player,draw_left,rec_left);
 impl_dir_draw!(Player,draw_right,rec_right);
-impl_dir_draw!(Player,draw_death,rec_death);
 impl_dir_draw!(Player,draw_spawn,rec_spawn);
+impl_dir_draw!(Player,draw_death,rec_death);
+impl_dir_draw!(Player,draw_shadow,rec_shadow);
 
 impl Player{
    pub fn new() -> Self {
@@ -106,20 +108,21 @@ impl Player{
      let rec_left = Rectangle::new(TDS_FRAMES[frames], LD_Y, TILE_SIZE, TILE_SIZE);
      let rec_spawn = Rectangle::new(TDS_FRAMES[frames], DS_Y, TILE_SIZE, TILE_SIZE);
      let rec_death = Rectangle::new(LRD_FRAMES[frames], DS_Y, TILE_SIZE, TILE_SIZE);
+     let rec_shadow = Rectangle::new(FRAMES[4],32_f32,TILE_SIZE,TILE_SIZE);
      let state = State2::ALIVE;
      let time = 0_f32;
      let ds_delay:f32 = 0_f32;
      let bomb_reload_time = BOMB_RELOAD_TIME;
-     Self{ dir ,moving,tint, rec2 , rec_up, rec_down, rec_right, rec_left,rec_spawn,rec_death, state, frames, time,ds_delay,bomb_reload_time}
+     Self{ dir ,moving,tint, rec2 , rec_up, rec_down, rec_right, rec_left,rec_spawn,rec_death,rec_shadow, state, frames, time,ds_delay,bomb_reload_time}
     }
 
   pub fn go(&mut self,collision:bool,frame_time:&f32){
     if collision{ // if collison is true push to opposite direction using margin value.
         match self.dir{
             DIR::Down=> {self.dir = self.dir.flip(); self.rec2.y -= MARGIN}
-            DIR::Up => {self.dir = self.dir.flip();self.rec2.y += MARGIN;}
-            DIR::Right => {self.dir = self.dir.flip();self.rec2.x -= MARGIN;}
-            DIR::Left => {self.dir = self.dir.flip();self.rec2.x += MARGIN;}
+            DIR::Up => {self.dir = self.dir.flip();self.rec2.y += MARGIN}
+            DIR::Right => {self.dir = self.dir.flip();self.rec2.x -= MARGIN}
+            DIR::Left => {self.dir = self.dir.flip();self.rec2.x += MARGIN}
             _ => {}
          }
     }else if self.moving & !collision{// Set direction for player movement.
@@ -136,7 +139,7 @@ impl Player{
    pub fn plant_bomb(&mut self,grid:&mut Grid){
      let position = self.get_position();
      let (i,j) = position;
-    if grid.cells[i][j] != EMPTY && self.bomb_reload_time < BOMB_RELOAD_TIME{
+    if grid.cells[i][j] != EMPTY || self.bomb_reload_time < BOMB_RELOAD_TIME{
         return;
       } else if self.bomb_reload_time >= BOMB_RELOAD_TIME{
          let mut new_bomb = Bomb::new();
@@ -152,8 +155,7 @@ impl Player{
     let position = self.get_position();
     let collisions = grid.get_collisions(position, obj_rec);
     let (fatal_coll,neutral_coll,_bonus_coll,_upgrade_coll,_win_coll) = collisions;
-
-    match self.state {
+    match self.state { 
     State2::ALIVE => {
     if fatal_coll {
        self.state = State2::DYING;
@@ -175,7 +177,8 @@ impl Player{
         self.dir = DIR::Right;
         self.moving = true;
         self.go(neutral_coll,frame_time);
-    }else if rl.is_key_down(KeyboardKey::KEY_B) {
+    }else if rl.is_key_pressed(KeyboardKey::KEY_B) {
+        self.moving = false;
         self.plant_bomb(grid);
     }else{
         self.moving = false;
@@ -186,6 +189,7 @@ impl Player{
      
  }
    pub fn draw(&mut self,d:&mut RaylibDrawHandle,player_texture:&Texture2D){    // Draw and update function.
+       self.draw_shadow(player_texture, d);
    match self.state {
      State2::ALIVE =>  match self.dir{   //Draw the player on screen.
         DIR::Down => { self.draw_down(player_texture, d)}

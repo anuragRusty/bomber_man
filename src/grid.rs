@@ -166,10 +166,10 @@ impl Grid {
         grid
     }
     
-     pub fn eject_flames(&mut self, l: usize, r: usize, c: usize) {
+     pub fn eject_flames(&mut self, r: usize, c: usize) {
         self.cells[r][c] = EMPTY;
         for &(x, y) in [(1, 0), (-1, 0), (0, 1), (0, -1)].iter() {
-            for i in 1..=l {
+            for i in 1..= MAX_BOMB_POWER {
                 let row = (r as isize + x as isize * i as isize) as usize;
                 let col = (c as isize + y as isize * i as isize) as usize;
                 let cell = &mut self.cells[row][col];
@@ -177,11 +177,11 @@ impl Grid {
                     break;
                 }else if *cell == EXPLOSION{
                   self.remove_obj(row, col);
-                  self.eject_flames(l, row, col);
+                  self.eject_flames( row, col);
                   break;
                 }
                 self.remove_obj(row, col);
-                if i == l {
+                if i == MAX_BOMB_POWER {
                     break;
                 }
             }
@@ -268,7 +268,7 @@ impl Grid {
                          self.inject_flames(power,i, j); // Injects flames consts in matrix to give signal to flame objs
                       },
                       State::EXPLOADED => {
-                        self.eject_flames(power, i, j);
+                        self.eject_flames( i, j);
                         self.remove_obj(i, j);
                       },
                     }

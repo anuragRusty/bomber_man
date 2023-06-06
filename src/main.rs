@@ -9,7 +9,7 @@ use raylib::core::audio::Sound;
 use grid::*;
 use game::*;
 
-const SPRITE_SHEET:&str = "assets/sheets.png";
+const SPRITE_SHEET:&str = "assets/sheets2.png";
 const EXP_SOUND:&str = "assets/exp.ogg";
 
 fn main() {    

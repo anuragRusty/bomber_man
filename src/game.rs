@@ -108,8 +108,8 @@ impl Game {
      let option = GameOption::IDEAL;
      let menu = false;
      let grid = Grid::new();
-     let screen_w = (TILE_SIZE*SCALE) as i32 * grid.cells.len() as i32;
-     let screen_h = (TILE_SIZE*SCALE) as i32 * grid.cells[1].len() as i32;
+     let screen_w = SCALED_TILE as i32 * grid.cells.len() as i32;
+     let screen_h = SCALED_TILE as i32 * grid.cells[1].len() as i32;
      let player = Player::new();
      let game_over_text = GameOver::new(screen_w,screen_h);
      let paused_text = Paused::new(screen_w,screen_h);
@@ -122,12 +122,10 @@ impl Game {
  pub fn update(&mut self,rl:&mut raylib::RaylibHandle,frame_time:&f32){
     self.handle_game_state(rl);
     
-    if self.state == GameState::RUNNING{
-   // let collisions = self.player.collision(&self.grid.cells);
+    if self.state == GameState::RUNNING {
     self.player.control(rl,frame_time,&mut self.grid);
     self.player.update(frame_time);
     }
-    
  }
 
  pub fn render(&mut self,d:&mut RaylibDrawHandle,sheets:&Texture2D,audio:&mut RaylibAudio,sounds:&Sound,frame_time:&f32){
