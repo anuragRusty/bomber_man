@@ -6,7 +6,10 @@ DONE -->
 #add breakawablewall ->  Done
 #add breakawablewall individiual wall destruction animation -> Done
 #add collison breakawablewall -> Done
+#add dynamic shadow system for Wall and Block. -> Done.
+#add dynamic and randomnised Grass and Block Textures.
 #add player sprite -> Done
+#add Player dynamic shadow texture. -> Done
 #add collison player sprite -> Done
 #add bomb -> Done
 #add plant bomb logic -> Done
@@ -14,9 +17,9 @@ DONE -->
 #add player movement -> Done
 #add bomb explosion logic -> Done
 #add bomb explosion animation -> Done
-#add flame logic -> Done
+#add flame logic and bomb power expansion -> Done
+#add bomb chain explosion using recurssion -> Done
 #add player death logic and animation -> Done
-##add gameover logic -> Nearly Done.
 
 TODO -->
 ---------------------------------------
@@ -27,11 +30,25 @@ TODO -->
 #add enemies animation and spwan
 #add enemies kill logic
 #add menu
-#add upgrades and bonuses
+#add upgrades 
+#add bonuses
+#add win logic
 #add audio
 #add dynamic scaling and resolution
-#add levels 
-#add multiplayer
+#add levels and code clean up and optimization
+#add Full Documentation of Features and Controls in Readme.md.
 
 PROGRESS --> 
 ---------------------------------------
+#design the game assets. -> Nearly Done.
+#add game state mangement systema and gameover logics -> In middle of development.
+
+FUTURE PLANS -->
+----------------------------------------
+#add mines,dynamite and sticky bomb;
+#add more types enemies and AI enemies.
+#add Wind flowing logic
+#add new map designs
+#add player variants.
+#add Android and Webassembly support using Raylib 4++.
+#add multiplayer
