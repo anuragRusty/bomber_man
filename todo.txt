@@ -20,33 +20,40 @@ DONE -->
 #add flame logic and bomb power expansion -> Done
 #add bomb chain explosion using recurssion -> Done
 #add player death logic and animation -> Done
+#Designing SpriteSheet -> nearly done
+#add bonuses -> done
 
 TODO -->
 ---------------------------------------
-
+#add variables types. 
 #add score time life pause restart systems.
 #add enemies
 #add enenmies attack logic 
 #add enemies animation and spwan
 #add enemies kill logic
 #add menu
-#add upgrades 
-#add bonuses
+#add upgrades -> Nearly done
+
 #add win logic
-#add audio
+
 #add dynamic scaling and resolution
 #add levels and code clean up and optimization
 #add Full Documentation of Features and Controls in Readme.md.
 
 PROGRESS --> 
 ---------------------------------------
-#design the game assets. -> Nearly Done.
+#add audio -> nearly Done
+#add bonus and upgrades -> in middle
+#add score and weapon selection system -> not started
+#fix player spawn and death animation
+#fix chain explosion logic by rewriting injection and ejection logic flame logic and add centerflame obj for intersection of flame. 
+#clean up macro mess
 #add game state mangement systema and gameover logics -> In middle of development.
 
 FUTURE PLANS -->
 ----------------------------------------
 #add mines,dynamite and sticky bomb;
-#add more types enemies and AI enemies.
+#add more types enemies and AI enemies .
 #add Wind flowing logic
 #add new map designs
 #add player variants.
